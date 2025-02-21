@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <header>
+        <h1>{{ message }}</h1>
+    </header>
+
+    <main>
+        <h2>Adicionar Novo Jogador</h2>
+        <form action="/adicionar_jogador" method="post" enctype="application/x-www-form-urlencoded">
+            <label for="nome">Nome: <input type="text" id="nome" name="nome" required></label><br>
+            <label for="sobrenome">Sobrenome: <input type="text" id="sobrenome" name="sobrenome" required></label><br>
+            <label for="altura">Altura: <input type="text" id="altura" name="altura" required></label><br>
+            <label for="posicao">Posição: <input type="text" id="posicao" name="posicao" required></label><br>
+            <label for="escola">Escola: <input type="text" id="escola" name="escola" required></label><br>
+            <label for="login">Login: <input type="text" id="login" name="login" required></label><br>
+            <label for="senha">Senha: <input type="password" id="senha" name="senha" required></label><br>
+            <button type="submit">Cadastrar Jogador</button>
+        </form>
+                <nav>
+            <ul>
+                <a href="/">Voltar</a>
+            </ul>
+        </nav>
+    </main>
+</body>
+</html>

@@ -14,67 +14,22 @@ use mysql::*;
 use mysql::prelude::*;
 //use serde::{Deserialize, Serialize};
 
-use crate::models::usuario::Usuario;
+use crate::models::jogador::Jogador;
 
 // Estrutura para conexão com o MySQL
 struct DbPool(Pool);
 
-// Estrutura para armazenar um usuário
-/*#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Usuario {
-    id: u32,
-    nome: String,
-    sobrenome: String,
-    cpf: String,
-    email: String,
-    telefone: String,
-    login: String,
-    senha: String,
-}*/
-
 // Estrutura para capturar os dados do formulário
+
 #[derive(FromForm)]
-struct UserInput {
+struct JogadorInput {
     nome: String,
     sobrenome: String,
-    cpf: String,
-    email: String,
-    telefone: String,
+    altura: String,
+    posicao: String,
+    escola: String,
     login: String,
     senha: String,
-}
-
-// Rota para listar usuários do banco de dados
-#[get("/listar_usuarios")]
-fn listar_usuarios(pool: &State<DbPool>) -> Template {
-    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
-
-    let usuarios: Vec<Usuario> = conn.query_map(
-        "SELECT id, nome, sobrenome, cpf, email, telefone, login, senha, role FROM usuarios",
-        |(id, nome, sobrenome, cpf, email, telefone, login, senha, role)| Usuario::new (id, nome, sobrenome, cpf, email, telefone, login, senha, role),
-    ).expect("Falha ao buscar usuários");
-
-    Template::render("usuarios", context! {
-        title: "Lista de Usuários",
-        usuarios
-    })
-}
-
-// Rota para adicionar um novo usuário via formulário
-#[post("/add-user", data = "<user_input>")]
-fn add_usuario(pool: &State<DbPool>, user_input: Form<UserInput>) -> Template {
-    let user = user_input.into_inner();
-    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
-
-    conn.exec_drop(
-        "INSERT INTO usuarios (nome, sobrenome, cpf, email, telefone, login, senha) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (&user.nome, &user.sobrenome, &user.cpf, &user.email, &user.telefone, &user.login, &user.senha),
-    ).expect("Erro ao inserir usuário");
-
-    Template::render("success", context! {
-        title: "Usuário Adicionado",
-        message: format!("Usuário {} cadastrado com sucesso!", user.nome)
-    })
 }
 
 #[get("/")]
@@ -82,118 +37,151 @@ fn index() -> Template {
     // Aqui, você pode passar dados opcionais para o template usando o contexto
     Template::render("index", context! {
         title: "Página Inicial",
-        message: "Bem-vindo à página inicial!"
+        message: "Bem-vindo ao Acampamento de Treinamento da Juventude do Japão!"
     })
 }
 
-// Estrutura para capturar os dados do formulário
-//#[derive(FromForm)]
-/*struct UserInput {
-    first_name: String,
-    last_name: String,
-}*/
-
-// Rota POST para processar o formulário e renderizar a página de saudação
-#[post("/submit", data = "<user_input>")]
-fn submit(user_input: Form<UserInput>) -> Template {
-    let user = user_input.into_inner();
-    Template::render("greeting", context! {
-        title: "Saudação",
-        greeting_message: format!("Olá, {} {}!", user.nome, user.sobrenome)
-    })
-}
-
-// Nova rota para a lista de músicas favoritas
-#[get("/favorite-songs")]
-fn favorite_songs() -> Template {
-
-
-    let songs = vec![
-        "Imagine - John Lennon",
-        "Bohemian Rhapsody - Queen",
-        "Stairway to Heaven - Led Zeppelin",
-        "Hotel California - Eagles",
-        "Hey Jude - The Beatles",
-    ];
-
-    Template::render("favorite_songs", context! {
-        title: "Minhas Músicas Favoritas",
-        songs
-    })
-}
-
-
-// Deletar usuário
-#[get("/delete-user/<id>")]
-fn delete_usuario(pool: &State<DbPool>, id: u32) -> Redirect {
+// Rota para listar os jogadores do BD
+#[get("/listar_jogadores")]
+fn listar_jogadores(pool: &State<DbPool>) -> Template {
     let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
 
-    conn.exec_drop("DELETE FROM usuarios WHERE id = ?", (id,))
-        .expect("Erro ao deletar usuário");
+    let jogadores: Vec<Jogador> = conn.query_map(
+        "SELECT id, nome, sobrenome, altura, posicao, escola, login, senha FROM jogadores",
+        |(id, nome, sobrenome, altura, posicao, escola, login, senha)| Jogador::new (id, nome, sobrenome, altura, posicao, escola, login, senha),
+    ).expect("Falha ao buscar jogadores");
 
-    Redirect::to("/listar_usuarios")
+    Template::render("jogadores", context! {
+        title: "Lista de jogadores",
+        jogadores
+    })
 }
 
-
-// Página de edição de usuário
-#[get("/edit-user/<id>")]
-fn edit_usuario_page(pool: &State<DbPool>, id: u32) -> Template {
-    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
-
-    let usuarios: Vec<Usuario> = conn.exec_map(
-        "SELECT id, nome, sobrenome, cpf, email, telefone, login, senha, role FROM usuarios WHERE id = ? LIMIT 1",
-        (id,),
-        |(id, nome, sobrenome, cpf, email, telefone, login, senha, role)| Usuario::new (id, nome, sobrenome, cpf, email, telefone, login, senha, role),
-    ).expect("Erro ao buscar usuário");
-
-    if let Some(user) = usuarios.into_iter().next() {
-        Template::render("edit_user", context! { title: "Editar Usuário", user })
-    } else {
-        Template::render("error", context! { message: "Usuário não encontrado!" })
-    }
+// Rota para exibir o formulário 
+#[get("/adicionar_jogador")]
+fn exibir_formulario() -> Template {
+    Template::render("adicionar_jogador", context! {
+        title: "Adicionar Jogador",
+        message: "Preencha o formulário para adicionar um novo jogador."
+    })
 }
 
-// Atualizar usuário
-#[post("/update-user/<id>", data = "<user_input>")]
-fn update_usuario(pool: &State<DbPool>, id: u32, user_input: Form<UserInput>) -> Redirect {
-    let user = user_input.into_inner();
+// Rota para processar os dados do formulário
+#[post("/adicionar_jogador", data = "<jogador_input>")]
+fn adicionar_jogador(pool: &State<DbPool>, jogador_input: Form<JogadorInput>) -> Template {
+    let jogador = jogador_input.into_inner();
     let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
 
     conn.exec_drop(
-        "UPDATE usuarios SET nome = ?, sobrenome = ?, cpf = ?, email = ?, telefone = ?, login = ?, senha = ? WHERE id = ?",
-        (&user.nome, &user.sobrenome, &user.cpf, &user.email, &user.telefone, &user.login, &user.senha, id),
-    ).expect("Erro ao atualizar usuário");
+        "INSERT INTO jogadores (nome, sobrenome, altura, posicao, escola, login, senha) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (&jogador.nome, &jogador.sobrenome, &jogador.altura, &jogador.posicao, &jogador.escola, &jogador.login, &jogador.senha),
+    ).expect("Erro ao inserir jogador");
 
-    Redirect::to("/listar_usuarios")
+    Template::render("success", context! {
+        title: "Jogador adicionado",
+        message: format!("Jogador {} cadastrado com sucesso!", jogador.nome)
+    })
 }
 
 
+// Rota POST para processar o formulário e renderizar a página de saudação
+#[post("/submit", data = "<jogador_input>")]
+fn submit(jogador_input: Form<JogadorInput>) -> Template {
+    let jogador = jogador_input.into_inner();
+    Template::render("greeting", context! {
+        title: "Saudação",
+        greeting_message: format!("Olá, {} {}!", jogador.nome, jogador.sobrenome)
+    })
+}
 
+// Rota para lista de jogadores
+#[get("/melhores_jogadores")]
+fn melhores_jogadores() -> Template {
+
+    let melhores_jogadores = vec![
+        "Shoyo Hinata - Escola Secundária Karasuno",
+        "Tobio Kageyama - Escola Secundária Karasuno",
+        "Korai Hoshiumi - Colégio Kamomedai",
+        "Kiyoomi Sakusa - Academia Itachiyama",
+        "Atsumu Miya - Escola Secundária Inarizaki",
+    ];
+
+    Template::render("melhores_jogadores", context! {
+        title: "Melhores jogadores",
+        melhores_jogadores
+    })
+}
+
+
+// Rota para deletar jogador
+#[get("/deletar_jogador/<id>")]
+fn deletar_jogador(pool: &State<DbPool>, id: u32) -> Redirect {
+    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
+
+    conn.exec_drop("DELETE FROM jogadores WHERE id = ?", (id,))
+        .expect("Erro ao deletar jogador");
+
+    Redirect::to("/listar_jogadores")
+}
+
+// Página para editar jogador
+#[get("/editar_jogador/<id>")]
+fn editar_jogador(pool: &State<DbPool>, id: u32) -> Template {
+    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
+
+    let jogadores: Vec<Jogador> = conn.exec_map(
+        "SELECT id, nome, sobrenome, altura, posicao, escola, login, senha FROM jogadores WHERE id = ? LIMIT 1",
+        (id,),
+        |(id, nome, sobrenome, altura, posicao, escola, login, senha)| Jogador::new (id, nome, sobrenome, altura, posicao, escola, login, senha),
+    ).expect("Erro ao buscar jogador");
+
+    if let Some(jogador) = jogadores.into_iter().next() {
+        Template::render("editar_jogador", context! { title: "Editar Jogador", jogador })
+    } else {
+        Template::render("error", context! { message: "Jogador não encontrado!" })
+    }
+}
+
+// Rota para atualizar jogador
+#[post("/atualizar_jogador/<id>", data = "<jogador_input>")]
+fn atualizar_jogador(pool: &State<DbPool>, id: u32, jogador_input: Form<JogadorInput>) -> Redirect {
+    let jogador = jogador_input.into_inner();
+    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
+
+    conn.exec_drop(
+        "UPDATE jogadores SET nome = ?, sobrenome = ?, altura = ?, posicao = ?, escola = ?, login = ?, senha = ? WHERE id = ?",
+        (&jogador.nome, &jogador.sobrenome, &jogador.altura, &jogador.posicao, &jogador.escola, &jogador.login, &jogador.senha, id),
+    ).expect("Erro ao atualizar jogador");
+
+    Redirect::to("/listar_jogadores")
+}
+
+
+// BANCO
 #[launch]
 fn rocket() -> _ {
 
-    let url = "mysql://root:@localhost:3306/riseonmusic";
+    let url = "mysql://root:@localhost:3306/haikyuu";
     let pool = Pool::new(url).expect("Falha ao criar conexão com MySQL");
 
     // Criando a tabela se não existir
     let mut conn = pool.get_conn().expect("Falha ao conectar ao banco");
     conn.query_drop(
-        r"CREATE TABLE IF NOT EXISTS usuarios (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100),
-            sobrenome VARCHAR(100),
-            cpf VARCHAR(14) UNIQUE,
-            email VARCHAR(100) UNIQUE,
-            telefone VARCHAR(15),
-            login VARCHAR(50) UNIQUE,
-            senha VARCHAR(255),
-            role ENUM('estudante', 'professor', 'admin') NOT NULL DEFAULT 'estudante'
+        r"CREATE TABLE IF NOT EXISTS jogadores (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(100),
+        sobrenome VARCHAR(100),
+        altura VARCHAR(10),
+        posicao VARCHAR(50),
+        escola VARCHAR(100),
+        login VARCHAR(50) UNIQUE,
+        senha VARCHAR(255)
         )"
     ).expect("Erro ao criar tabela");
 
 
     rocket::build()
         .manage(DbPool(pool)) // Adiciona a conexão ao estado do Rocket
-        .mount("/", routes![index, submit, favorite_songs, listar_usuarios, add_usuario, edit_usuario_page, update_usuario, delete_usuario])
+        .mount("/", routes![index, submit, listar_jogadores, melhores_jogadores, exibir_formulario, adicionar_jogador, editar_jogador, atualizar_jogador, deletar_jogador])
         .attach(Template::fairing()) // Anexa o fairing do Handlebars para processar templates
 }

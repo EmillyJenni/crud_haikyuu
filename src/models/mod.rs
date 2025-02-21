@@ -1,1 +1,1 @@
-pub mod usuario;
+pub mod jogador;

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <nav>
+        <ul>
+            <li><a href="/">Voltar</a></li>
+        </ul>
+    </nav>
+    <h2>Jogadores cadastrados</h2>
+    {{#if jogadores}}
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Sobrenome</th>
+                <th>Altura:</th>
+                <th>Posição</th>
+                <th>Escola</th>
+                <th>Login</th>
+                <th>Ações</th>
+            </tr>
+            {{#each jogadores}}
+            <tr>
+                <td>{{ this.id }}</td>
+                <td>{{ this.nome }}</td>
+                <td>{{ this.sobrenome }}</td>
+                <td>{{ this.altura }}</td>
+                <td>{{ this.posicao }}</td>
+                <td>{{ this.escola }}</td>
+                <td>{{ this.login }}</td>
+                <td>
+                    <a href="/editar_jogador/{{ this.id }}">Editar</a> |
+                    <a href="/deletar_jogador/{{ this.id }}" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</a>
+                </td>
+            </tr>
+            {{/each}}
+        </table>
+    {{else}}
+        <p>Nenhum usuário cadastrado.</p>
+    {{/if}}
+</body>
+</html>
