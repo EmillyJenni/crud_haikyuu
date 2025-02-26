@@ -2,23 +2,109 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #2c3e50;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #c0392b;
+            color: white;
+            padding: 20px;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        h2 {
+            margin-top: 20px;
+            color: #c0392b;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        nav li {
+            margin: 15px 0;
+        }
+
+        nav a {
+            display: inline-block;
+            background-color: #c0392b;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #a93226;
+        }
+
+        table {
+            margin-top: 30px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #c0392b;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+
+        a {
+            text-decoration: none;
+            color: #c0392b;
+        }
+
+        a:hover {
+            color: #a93226;
+        }
+    </style>
 </head>
 <body>
-    <h1>{{ title }}</h1>
-    <nav>
-        <ul>
-            <li><a href="/">Voltar</a></li>
-        </ul>
-    </nav>
-    <h2>Jogadores cadastrados</h2>
-    {{#if jogadores}}
-        <table border="1">
+    <header>
+        {{ title }}
+    </header>
+
+    <main>
+        {{#if jogadores}}
+        <table>
             <tr>
                 <th>ID</th>
                 <th>Nome</th>
                 <th>Sobrenome</th>
-                <th>Altura:</th>
+                <th>Altura</th>
                 <th>Posição</th>
                 <th>Escola</th>
                 <th>Login</th>
@@ -34,14 +120,22 @@
                 <td>{{ this.escola }}</td>
                 <td>{{ this.login }}</td>
                 <td>
-                    <a href="/editar_jogador/{{ this.id }}">Editar</a> |
+                    <a href="/editar_jogador/{{ this.id }}">Editar</a> | 
                     <a href="/deletar_jogador/{{ this.id }}" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</a>
                 </td>
             </tr>
             {{/each}}
         </table>
-    {{else}}
-        <p>Nenhum usuário cadastrado.</p>
-    {{/if}}
+        {{else}}
+        <p>Nenhum jogador cadastrado.</p>
+        {{/if}}
+
+        <nav>
+            <ul>
+                <li><a href="/">Voltar</a></li>
+            </ul>
+        </nav>
+        
+    </main>
 </body>
 </html>
