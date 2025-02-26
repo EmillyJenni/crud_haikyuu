@@ -27,10 +27,11 @@ struct JogadorInput {
     sobrenome: String,
     altura: String,
     posicao: String,
-    escola: String,
+    escola_id: u32,  // Alterado para armazenar o ID da escola
     login: String,
     senha: String,
 }
+
 
 #[get("/")]
 fn index() -> Template {
@@ -47,8 +48,10 @@ fn listar_jogadores(pool: &State<DbPool>) -> Template {
     let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
 
     let jogadores: Vec<Jogador> = conn.query_map(
-        "SELECT id, nome, sobrenome, altura, posicao, escola, login, senha FROM jogadores",
-        |(id, nome, sobrenome, altura, posicao, escola, login, senha)| Jogador::new (id, nome, sobrenome, altura, posicao, escola, login, senha),
+        "SELECT j.id, j.nome, j.sobrenome, j.altura, j.posicao, e.nome AS escola, j.login, j.senha
+         FROM jogadores j
+         LEFT JOIN escolas e ON j.escola_id = e.id",
+        |(id, nome, sobrenome, altura, posicao, escola, login, senha)| Jogador::new(id, nome, sobrenome, altura, posicao, escola, login, senha),
     ).expect("Falha ao buscar jogadores");
 
     Template::render("jogadores", context! {
@@ -57,14 +60,49 @@ fn listar_jogadores(pool: &State<DbPool>) -> Template {
     })
 }
 
-// Rota para exibir o formulário 
-#[get("/adicionar_jogador")]
-fn exibir_formulario() -> Template {
-    Template::render("adicionar_jogador", context! {
-        title: "Adicionar Jogador",
-        message: "Preencha o formulário para adicionar um novo jogador."
+#[post("/adicionar_escola", data = "<nome>")]
+fn adicionar_escola(pool: &State<DbPool>, nome: String) -> Redirect {
+    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
+
+    conn.exec_drop("INSERT INTO escolas (nome) VALUES (?)", (&nome,))
+        .expect("Erro ao adicionar escola");
+
+    Redirect::to("/listar_escolas")
+}
+
+
+#[get("/listar_escolas")]
+fn listar_escolas(pool: &State<DbPool>) -> Template {
+    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
+
+    let escolas: Vec<(u32, String)> = conn.query_map(
+        "SELECT id, nome FROM escolas",
+        |(id, nome)| (id, nome),
+    ).expect("Falha ao buscar escolas");
+
+    Template::render("listar_escolas", context! {
+        title: "Lista de Escolas",
+        escolas
     })
 }
+
+
+// Rota para exibir o formulário 
+#[get("/adicionar_jogador")]
+fn exibir_formulario(pool: &State<DbPool>) -> Template {
+    let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
+
+    let escolas: Vec<(u32, String)> = conn.query_map(
+        "SELECT id, nome FROM escolas",
+        |(id, nome)| (id, nome),
+    ).expect("Falha ao buscar escolas");
+
+    Template::render("adicionar_jogador", context! {
+        title: "Adicionar Jogador",
+        escolas  // Passando as escolas para o template
+    })
+}
+
 
 // Rota para processar os dados do formulário
 #[post("/adicionar_jogador", data = "<jogador_input>")]
@@ -73,8 +111,8 @@ fn adicionar_jogador(pool: &State<DbPool>, jogador_input: Form<JogadorInput>) ->
     let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
 
     conn.exec_drop(
-        "INSERT INTO jogadores (nome, sobrenome, altura, posicao, escola, login, senha) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (&jogador.nome, &jogador.sobrenome, &jogador.altura, &jogador.posicao, &jogador.escola, &jogador.login, &jogador.senha),
+        "INSERT INTO jogadores (nome, sobrenome, altura, posicao, escola_id, login, senha) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (&jogador.nome, &jogador.sobrenome, &jogador.altura, &jogador.posicao, &jogador.escola_id, &jogador.login, &jogador.senha),
     ).expect("Erro ao inserir jogador");
 
     Template::render("success", context! {
@@ -82,6 +120,7 @@ fn adicionar_jogador(pool: &State<DbPool>, jogador_input: Form<JogadorInput>) ->
         message: format!("Jogador {} cadastrado com sucesso!", jogador.nome)
     })
 }
+
 
 
 // Rota POST para processar o formulário e renderizar a página de saudação
@@ -149,8 +188,8 @@ fn atualizar_jogador(pool: &State<DbPool>, id: u32, jogador_input: Form<JogadorI
     let mut conn = pool.0.get_conn().expect("Falha ao conectar ao banco");
 
     conn.exec_drop(
-        "UPDATE jogadores SET nome = ?, sobrenome = ?, altura = ?, posicao = ?, escola = ?, login = ?, senha = ? WHERE id = ?",
-        (&jogador.nome, &jogador.sobrenome, &jogador.altura, &jogador.posicao, &jogador.escola, &jogador.login, &jogador.senha, id),
+        "UPDATE jogadores SET nome = ?, sobrenome = ?, altura = ?, posicao = ?, escola_id = ?, login = ?, senha = ? WHERE id = ?",
+        (&jogador.nome, &jogador.sobrenome, &jogador.altura, &jogador.posicao, &jogador.escola_id, &jogador.login, &jogador.senha, id),
     ).expect("Erro ao atualizar jogador");
 
     Redirect::to("/listar_jogadores")
@@ -168,20 +207,22 @@ fn rocket() -> _ {
     let mut conn = pool.get_conn().expect("Falha ao conectar ao banco");
     conn.query_drop(
         r"CREATE TABLE IF NOT EXISTS jogadores (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nome VARCHAR(100),
-        sobrenome VARCHAR(100),
-        altura VARCHAR(10),
-        posicao VARCHAR(50),
-        escola VARCHAR(100),
-        login VARCHAR(50) UNIQUE,
-        senha VARCHAR(255)
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(100),
+            sobrenome VARCHAR(100),
+            altura VARCHAR(10),
+            posicao VARCHAR(50),
+            escola_id INT,
+            login VARCHAR(50) UNIQUE,
+            senha VARCHAR(255),
+            FOREIGN KEY (escola_id) REFERENCES escolas(id) ON DELETE SET NULL
         )"
-    ).expect("Erro ao criar tabela");
+    ).expect("Erro ao criar tabela jogadores");
+    
 
 
     rocket::build()
         .manage(DbPool(pool)) // Adiciona a conexão ao estado do Rocket
-        .mount("/", routes![index, submit, listar_jogadores, melhores_jogadores, exibir_formulario, adicionar_jogador, editar_jogador, atualizar_jogador, deletar_jogador])
+        .mount("/", routes![index, submit, listar_jogadores, melhores_jogadores, exibir_formulario, adicionar_jogador, editar_jogador, atualizar_jogador, deletar_jogador, adicionar_escola,listar_escolas ])
         .attach(Template::fairing()) // Anexa o fairing do Handlebars para processar templates
 }

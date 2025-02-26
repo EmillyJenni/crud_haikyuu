@@ -4,6 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+        div {
+            margin-bottom: 10px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        nav {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -12,20 +48,51 @@
 
     <main>
         <h2>Adicionar Novo Jogador</h2>
-        <form action="/adicionar_jogador" method="post" enctype="application/x-www-form-urlencoded">
-            <label for="nome">Nome: <input type="text" id="nome" name="nome" required></label><br>
-            <label for="sobrenome">Sobrenome: <input type="text" id="sobrenome" name="sobrenome" required></label><br>
-            <label for="altura">Altura: <input type="text" id="altura" name="altura" required></label><br>
-            <label for="posicao">Posição: <input type="text" id="posicao" name="posicao" required></label><br>
-            <label for="escola">Escola: <input type="text" id="escola" name="escola" required></label><br>
-            <label for="login">Login: <input type="text" id="login" name="login" required></label><br>
-            <label for="senha">Senha: <input type="password" id="senha" name="senha" required></label><br>
-            <button type="submit">Cadastrar Jogador</button>
+        <form action="/adicionar_jogador" method="post">
+            <div>
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+
+            <div>
+                <label for="sobrenome">Sobrenome:</label>
+                <input type="text" id="sobrenome" name="sobrenome" required>
+            </div>
+
+            <div>
+                <label for="altura">Altura:</label>
+                <input type="text" id="altura" name="altura" required>
+            </div>
+
+            <div>
+                <label for="posicao">Posição:</label>
+                <input type="text" id="posicao" name="posicao" required>
+            </div>
+
+            <div>
+                <label for="escola_id">Escola:</label>
+                <select id="escola_id" name="escola_id">
+                    {{#each escolas}}
+                    <option value="{{this.0}}">{{this.1}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div>
+                <label for="login">Login:</label>
+                <input type="text" id="login" name="login" required>
+            </div>
+
+            <div>
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" name="senha" required>
+            </div>
+
+            <button type="submit">Cadastrar</button>
         </form>
-                <nav>
-            <ul>
-                <a href="/">Voltar</a>
-            </ul>
+
+        <nav>
+            <a href="/">Voltar</a>
         </nav>
     </main>
 </body>
